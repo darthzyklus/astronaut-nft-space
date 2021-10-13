@@ -174,7 +174,7 @@ const Home: NextPage = () => {
               </Text>
             )}
             <Link
-              href="https://testnets.opensea.io/collection/"
+              href="https://testnets.opensea.io/collection/astronautnft-v4"
               target="_blank"
               color="blue.400"
             >
