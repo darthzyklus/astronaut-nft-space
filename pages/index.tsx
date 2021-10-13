@@ -1,20 +1,122 @@
-import { Box, Button, Flex, Heading, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Link, Text } from "@chakra-ui/react";
 import type { NextPage } from "next";
 import Head from "next/head";
+import { useEffect, useState } from "react";
+import getTotalNFTsMinted from "../utils/getTotalNFTsMinted";
+import mintNft from "../utils/mintNft";
+import setupMintedEventListener from "../utils/setupMintedEventListener";
+
+const TWITTER_HANDLE = "darthzyklus";
+const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
+const TOTAL_MINT_COUNT = 30;
 
 const Home: NextPage = () => {
-  // Render Methods
-  const renderNotConnectedContainer = () => (
-    <Box m="4">
-      <Button
-        bg="cyan.500"
-        _hover={{ bg: "cyan.400" }}
-        _focus={{ bg: "cyan.400" }}
-      >
-        Connect to Wallet
-      </Button>
-    </Box>
-  );
+  const [mintCount, setMintCount] = useState<number | null>(null);
+  const [minting, setMinting] = useState(false);
+  const [account, setAccount] = useState<any>();
+
+  const checkIfWalletIsConnected = async () => {
+    const { ethereum } = window;
+
+    if (!ethereum) {
+      return console.log("make sure you have metamask!");
+    }
+
+    console.log("We have the  ethereum object", ethereum);
+
+    // check authorization to access the user's wallet
+    const accounts = await ethereum.request({ method: "eth_accounts" });
+
+    // user can have multiple accounts but lets grab the first one by default
+    if (accounts.length === 0) {
+      return console.log("No authorized account found");
+    }
+
+    const defaultAccount = accounts[0];
+    setAccount(defaultAccount);
+
+    // setup listener for the case that user is already connected and authorized
+    setupMintedEventListener(() => {
+      if (typeof mintCount === "number") {
+        setMintCount(mintCount + 1);
+      }
+    });
+  };
+
+  const connectWallet = async () => {
+    try {
+      const { ethereum } = window;
+
+      if (!ethereum) {
+        return alert("Get MetaMask!");
+      }
+
+      // require access to the account
+      const accounts = await ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
+      const defaultAccount = accounts[0];
+      setAccount(defaultAccount);
+
+      // setup listener for the case that user connect the wallet for the first time
+      setupMintedEventListener(() => {
+        if (typeof mintCount === "number") {
+          setMintCount(mintCount + 1);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onMint = async () => {
+    setMinting(true);
+    try {
+      const { ethereum } = window;
+
+      if (!ethereum) {
+        return console.log("Ethereum object doesn't exists");
+      }
+
+      let chainId = await ethereum.request({ method: "eth_chainId" });
+      console.log("Connected to chain " + chainId);
+
+      // String, hex code of the chainId of the Rinkebey test network
+      const rinkebyChainId = "0x4";
+      if (chainId !== rinkebyChainId) {
+        return alert("You are not connected to the Rinkeby Test Network!");
+      }
+
+      await mintNft();
+    } catch (error) {
+      console.log(error);
+    }
+
+    setMinting(false);
+  };
+
+  useEffect(() => {
+    checkIfWalletIsConnected();
+  }, []);
+
+  useEffect(() => {
+    if (account) {
+      const fetchMintedCount = async () => {
+        try {
+          const mintCount = await getTotalNFTsMinted();
+
+          if (typeof mintCount === "number") {
+            setMintCount(mintCount);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      };
+
+      fetchMintedCount();
+    }
+  }, [account]);
 
   return (
     <div>
@@ -29,18 +131,64 @@ const Home: NextPage = () => {
       </Head>
       <Box as="main" bg="gray.900" minH="100vh" minW="100vw" color="gray.100">
         <Flex
-          justifyContent="center"
+          justifyContent="space-around"
           alignItems="center"
           minH="100vh"
           flexDir="column"
         >
-          <Heading as="h1" color="cyan.400" textAlign="center">
-            Astronaut NFT Collection
-          </Heading>
-          <Text textAlign="center">
-            Earn an unique and pretty cool astronaut avatar
-          </Text>
-          {renderNotConnectedContainer()}
+          <Box textAlign="center">
+            <Heading as="h1" color="cyan.400" textAlign="center">
+              Astronaut NFT Collection
+            </Heading>
+            <Text textAlign="center">
+              Earn an unique and pretty cool astronaut avatar
+            </Text>
+            {!account && (
+              <Box m="4">
+                <Button
+                  onClick={connectWallet}
+                  bg="cyan.500"
+                  _hover={{ bg: "cyan.400" }}
+                  _focus={{ bg: "cyan.400" }}
+                >
+                  Connect to Wallet
+                </Button>
+              </Box>
+            )}
+            {account && (
+              <Box m="4">
+                <Button
+                  isLoading={minting}
+                  onClick={onMint}
+                  bg="cyan.500"
+                  _hover={{ bg: "cyan.400" }}
+                  _focus={{ bg: "cyan.400" }}
+                >
+                  Mint NFT
+                </Button>
+              </Box>
+            )}
+            {mintCount && (
+              <Text>
+                Assigned NFTs: {mintCount}/{TOTAL_MINT_COUNT}
+              </Text>
+            )}
+            <Link
+              href="https://testnets.opensea.io/collection/"
+              target="_blank"
+              color="blue.400"
+            >
+              View Collection on OpenSea
+            </Link>
+          </Box>
+          <Box>
+            <a
+              className="footer-text"
+              href={TWITTER_LINK}
+              target="_blank"
+              rel="noreferrer"
+            >{`Built by @${TWITTER_HANDLE}`}</a>
+          </Box>
         </Flex>
       </Box>
     </div>
