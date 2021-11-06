@@ -1,4 +1,12 @@
-import { Box, Button, Flex, Heading, Link, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  Image,
+  Link,
+  Text,
+} from "@chakra-ui/react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import { useEffect, useState } from "react";
@@ -129,7 +137,13 @@ const Home: NextPage = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Box as="main" bg="gray.900" minH="100vh" minW="100vw" color="gray.100">
+      <Box
+        as="main"
+        minH="100vh"
+        minW="100vw"
+        color="gray.100"
+        bgGradient="linear(to-bl, #1A365D, #171923)"
+      >
         <Flex
           justifyContent="space-around"
           alignItems="center"
@@ -141,8 +155,11 @@ const Home: NextPage = () => {
               Astronaut NFT Collection
             </Heading>
             <Text textAlign="center">
-              Earn an unique and pretty cool astronaut avatar
+              Earn an unique and pretty cool astronaut NFT avatar
             </Text>
+            <Flex justifyContent="center">
+              <Image src="./astronaut.svg" h="64" w="64" />
+            </Flex>
             {!account && (
               <Box m="4">
                 <Button
@@ -178,7 +195,7 @@ const Home: NextPage = () => {
               target="_blank"
               color="blue.400"
             >
-              View Collection on OpenSea
+              View collection on OpenSea
             </Link>
           </Box>
           <Box>
